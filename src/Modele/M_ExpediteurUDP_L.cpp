@@ -27,6 +27,6 @@ bool M_ExpediteurUDP_L::envoyer(const void *donnees, const int taille) {
 }
 
 void M_ExpediteurUDP_L::transmettreCommande(const TypeCommande type, const float valeur) {
-    const PaquetControle p{0x5453454D, type, valeur};
+    const PaquetControle p{ type, valeur};
     envoyer(&p, sizeof(p));
 }

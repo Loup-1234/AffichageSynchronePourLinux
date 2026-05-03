@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.20)
 
-project(AffichageSynchronePourLinux)
+project(AffichageSynchronePourLinux CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -13,9 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(PkgConfig REQUIRED)
 
 # On demande à CMake de trouver les bibliothèques installées sur le système
-pkg_check_modules(RAYLIB REQUIRED raylib)
-pkg_check_modules(VLC REQUIRED libvlc)
-pkg_check_modules(FFTW REQUIRED fftw3)
+# L'utilisation de IMPORTED_TARGET permet de mieux gérer les inclusions système (évite d'inclure /usr/include directement)
+pkg_check_modules(RAYLIB REQUIRED IMPORTED_TARGET raylib)
+pkg_check_modules(VLC REQUIRED IMPORTED_TARGET libvlc)
+pkg_check_modules(FFTW REQUIRED IMPORTED_TARGET fftw3)
 
 # ==========================================
 # FICHIERS DU PROJET
@@ -48,21 +49,12 @@ add_executable(AffichageSynchronePourLinux ${SOURCE_FILES} ${HEADER_FILES})
 
 target_include_directories(AffichageSynchronePourLinux PRIVATE
         include
-        ${RAYLIB_INCLUDE_DIRS}
-        ${VLC_INCLUDE_DIRS}
-        ${FFTW_INCLUDE_DIRS}
-)
-
-target_link_directories(AffichageSynchronePourLinux PRIVATE
-        ${RAYLIB_LIBRARY_DIRS}
-        ${VLC_LIBRARY_DIRS}
-        ${FFTW_LIBRARY_DIRS}
 )
 
 target_link_libraries(AffichageSynchronePourLinux PRIVATE
-        ${RAYLIB_LIBRARIES}
-        ${VLC_LIBRARIES}
-        ${FFTW_LIBRARIES}
+        PkgConfig::RAYLIB
+        PkgConfig::VLC
+        PkgConfig::FFTW
         m        # Bibliothèque mathématique
         pthread  # Threads POSIX
 )

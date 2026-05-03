@@ -2,21 +2,29 @@
 
 #include "M_VideoComplexe.h"
 
-#include <vector>
 #include <string>
 
 using namespace std;
 
-class M_SessionLecture {
-private:
-    M_VideoComplexe VideoComplexe;
+struct LecteurSpec {
+    string id;
+    string ip;
+    string nbVideos;
+};
 
-    vector<int> IdLecteurs;
-    vector<string> IpLecteurs;
-    vector<int> NbVideos;
+class M_SessionLecture {
+
+    M_VideoComplexe instanceVideoComplexe;
+
+    int* idLecteurs = nullptr;
+    string* ipLecteurs = nullptr;
+    int* nbVideos = nullptr;
+    size_t nbLecteursTotal = 0;
 
 public:
-    void preparerSessionLecture(const vector<vector<string> > &specLecteurs);
+    M_SessionLecture() = default;
+    ~M_SessionLecture();
 
-    void genererVideoComplexe(const vector<string> &listeFichierEntree);
+    void preparerSessionLecture(const LecteurSpec* specLecteurs, size_t nbLecteurs);
+    void genererVideoComplexe(const string* listeFichiersEntree, size_t nbFichiers);
 };

@@ -7,8 +7,8 @@
 using namespace std;
 namespace fs = filesystem;
 
-V_Master::V_Master(const string &ipGroupe, const int port, const vector<vector<string> > &specLecteurs)
-    : controleur(ipGroupe, port, specLecteurs) {
+V_Master::V_Master(const string &ipBroadcast, const int port, const vector<vector<string> > &specLecteurs)
+    : controleur(ipBroadcast, port, specLecteurs) {
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 450, "Master UI - Contrôleur MVC");
     SetWindowMinSize(800, 450);
@@ -97,24 +97,28 @@ void V_Master::gererLogique() {
 
     controleur.mettreAJour();
 
-    controleur.consommerFrameVideo(
-        [this](void *pixels, unsigned int largeur, unsigned int hauteur, bool redimensionnement) {
-            largeurVideoCache = largeur;
-            hauteurVideoCache = hauteur;
+    void* pixels = nullptr;
+    unsigned int largeur = 0;
+    unsigned int hauteur = 0;
+    bool redimensionnement = false;
 
-            if (redimensionnement) {
-                if (textureVideo.id > 0) UnloadTexture(textureVideo);
-                if (largeur > 0 && hauteur > 0) {
-                    Image img = GenImageColor(largeur, hauteur, BLACK);
-                    textureVideo = LoadTextureFromImage(img);
-                    UnloadImage(img);
-                }
-            }
+    if (controleur.recupererFrameVideo(pixels, largeur, hauteur, redimensionnement)) {
+        largeurVideoCache = largeur;
+        hauteurVideoCache = hauteur;
 
-            if (largeur > 0 && hauteur > 0 && pixels) {
-                UpdateTexture(textureVideo, pixels);
+        if (redimensionnement) {
+            if (textureVideo.id > 0) UnloadTexture(textureVideo);
+            if (largeur > 0 && hauteur > 0) {
+                const Image img = GenImageColor(largeur, hauteur, BLACK);
+                textureVideo = LoadTextureFromImage(img);
+                UnloadImage(img);
             }
-        });
+        }
+
+        if (largeur > 0 && hauteur > 0 && pixels != nullptr) {
+            UpdateTexture(textureVideo, pixels);
+        }
+    }
 
     if (delaiRecherche > 0) delaiRecherche -= GetFrameTime();
     if (!enGlissement && delaiRecherche <= 0 && controleur.getDureeTotale() > 0) {
@@ -213,8 +217,10 @@ void V_Master::gererBarreProgression() {
     GuiLabel(zones[5], TextFormat("%02d:%02d / %02d:%02d", minutes, secondes, dureeMinutes, dureeSecondes));
 
     const float ancienneProg = valeurProgression;
+
     if (CheckCollisionPointRec(GetMousePosition(), zones[6]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         enGlissement = true;
+        etaitEnLectureAvantGlissement = controleur.estEnLecture();
     }
 
     GuiSliderBar(zones[6], "", nullptr, &valeurProgression, 0.0f, controleur.getDureeTotale());
@@ -226,7 +232,7 @@ void V_Master::gererBarreProgression() {
     if (enGlissement && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) || !IsMouseButtonDown(MOUSE_LEFT_BUTTON))) {
         enGlissement = false;
         delaiRecherche = 0.2f;
-        controleur.modifierProgression(valeurProgression, false);
+        controleur.modifierProgression(valeurProgression, false, etaitEnLectureAvantGlissement);
     }
 }
 
@@ -250,7 +256,7 @@ void V_Master::gererControlesVolume() {
 void V_Master::dessinerOverlayChargement() {
     if (controleur.estGenerationEnCours()) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.5f));
-        DrawText("Génération en cours...", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2, 20, WHITE);
+        ::DrawText("Génération en cours...", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2, 20, WHITE);
         rotationChargement += 4.0f;
         const Rectangle rectChargement = {static_cast<float>(GetScreenWidth()) / 2, static_cast<float>(GetScreenHeight()) / 2 - 40, 20, 20};
         DrawRectanglePro(rectChargement, {10, 10}, rotationChargement, WHITE);

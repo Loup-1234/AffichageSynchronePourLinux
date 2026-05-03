@@ -9,7 +9,7 @@ using namespace std;
 
 class V_Master {
 public:
-    V_Master(const string &ipGroupe, int port, const vector<vector<string> > &specLecteurs);
+    V_Master(const string &ipBroadcast, int port, const vector<vector<string> > &specLecteurs);
 
     ~V_Master();
 
@@ -32,6 +32,7 @@ private:
     bool estMuet = false;
     bool enGlissement = false;
     float delaiRecherche = 0.0f;
+    bool etaitEnLectureAvantGlissement = false;
 
     vector<string> fichiersVideo;
     vector<bool> videosCochees;
